@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Welcome Adminstrator</h2>
+<p>With great power comes great responsibility <i>--Uncle Ben</i></p>
+<div>
+    <div style="margin-top:20px;">
+        <a href="{{url_for('admin.index')}}user">User Admin</a>
+    </div>
+    <div style="margin-top:20px;">
+        <a href="{{url_for('admin.index')}}taco">Taco Admin</a>
+    </div>
+</div>
+
+{% endblock %}
