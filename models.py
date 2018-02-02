@@ -32,6 +32,10 @@ class User(UserMixin, Model):
             return True
         return False
     
+    def reset_password(self, password):
+        self.password = generate_password_hash(password)
+        self.save()
+        
     def __repr__(self):
         return self.email
         
@@ -51,15 +55,25 @@ class Taco(Model):
         database = DATABASE
         order_by = ('protein',)
         
+def fix_unencrypted_passwords():
+    """if an admin changes a password with flask-admin, this must be called for maintenance"""
+    # this may be unecessary if I override the create method, but could have database
+    # portability implications
+    users = User.select()
+    for user in users:
+        try:
+            # authentication should throw an error on a non-hashed password
+            user.authenticate(user.password)
+        except:
+            # encrypt/hash current password
+            user.reset_password(user.password)
+        
 def initialize():
-    """initialize database, create tables if necessary, add some data"""
-    # inject some data for fun
     DATABASE.connect()
     DATABASE.create_tables([User,Taco],safe=True)
-    add_default_data(debug=True)
-    DATABASE.close()
     
 def add_default_data(debug=False):
+    """add default data, should only be run after initialize since DATABASE should be connected"""
     try: User.create_user(email='admin@local.net', password='secret', is_admin=True)
     except Exception as e:
         if debug: print(str(e))
@@ -68,7 +82,7 @@ def add_default_data(debug=False):
         if debug: print(str(e))
         
         
-    user = User.select().get()
+    #user = User.select().get()
     Taco.create(
             user=user,
             protein='chicken',
@@ -76,4 +90,4 @@ def add_default_data(debug=False):
             cheese=False,
             extras='Gimme some guac.'
         )
-    taco = Taco.select().get()    
+    #taco = Taco.select().get()    

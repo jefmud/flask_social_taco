@@ -9,6 +9,11 @@
     <div style="margin-top:20px;">
         <a href="{{url_for('admin.index')}}taco">Taco Admin</a>
     </div>
+    <div style="margin-top:20px;">
+        <a href="{{url_for('_password_audit')}}">Password Audit</a>
+        <p></p>
+        <p><b>note:</b> password audit is necessary after manual password change in User Admin</p>
+    </div>
 </div>
 
 {% endblock %}

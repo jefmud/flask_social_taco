@@ -1,3 +1,8 @@
+# tacocat.py (my implementation of Kenneth Love's Flask Social Network concept)
+# Jeff did this in 2018-January
+
+import sys
+
 # basic flask imports
 from flask import (abort, Flask, flash, g, redirect, render_template, url_for)
 
@@ -33,7 +38,8 @@ class MyAdminView(AdminIndexView):
         try:
             if current_user.is_admin:
                 return render_template('admin.html')
-        except:
+        except Exception as e:
+            print(e)
             pass # silently fail for unauthorized trying to access admin space
         
         return redirect(url_for('index'))
@@ -83,7 +89,7 @@ def login():
             user = models.User.get(models.User.email==email)
             if user.authenticate(password):
                 login_user(user)
-                flash('You were successfully logged in', category='success')
+                flash('Welcome {}'.format(user), category='success')
                 return redirect(url_for('index'))
         except Exception as e:
             print(e)
@@ -140,15 +146,45 @@ def taco():
     
     return render_template('taco.html', form=form)
     
+@app.route('/_password_audit')
+@login_required
+def _password_audit():
+    if current_user.is_admin: 
+        models.fix_unencrypted_passwords()
+        flash('Password hash audit completed.', category="success")
+        return redirect(url_for('admin.index'))
+    else:
+        return redirect(url_for('index')) # silently redirect if non-admin user
 
 @app.route('/')
 def index():
     tacos = models.Taco.select()
     return render_template('index.html', tacos=tacos)
 
+@app.errorhandler(404)
+@app.errorhandler(403)
+def page_not_found(e):
+    """skip showing an error, just put them on the index"""
+    return redirect(url_for("index"))
+
 if __name__ == '__main__':
-    #models.DATABASE.connect()
-    #models.initialize()
-    #models.add_default_data()
-    app.run(host=HOST, port=PORT, debug=DEBUG)
+
+    # handle a few simple command line arguments
+    if '--createadmin' in sys.argv:
+        email = input("Enter admin email: ")
+        password = input("Enter a password: ")
+        models.initialize()
+        models.User.create_user(email=email, password=password, is_admin=True)
+        print("** Added an admin user **")
+    elif '--addsampledata' in sys.argv:
+        models.initialize()
+        models.add_default_data(debug=True)
+        print("** Sample data added **")
+    elif '--deletetacos' in sys.argv:
+        models.initialize()
+        tacos = models.Taco.select()
+        for taco in tacos: taco.delete_instance()
+        print("** Taco inventory deleted **")
+    else:
+        app.run(host=HOST, port=PORT, debug=DEBUG)
 
