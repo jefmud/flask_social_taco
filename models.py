@@ -52,9 +52,12 @@ class Taco(Model):
         order_by = ('protein',)
         
 def initialize():
-    #DATABASE.connect()
+    """initialize database, create tables if necessary, add some data"""
+    # inject some data for fun
+    DATABASE.connect()
     DATABASE.create_tables([User,Taco],safe=True)
-    #DATABASE.close()
+    add_default_data(debug=True)
+    DATABASE.close()
     
 def add_default_data(debug=False):
     try: User.create_user(email='admin@local.net', password='secret', is_admin=True)
